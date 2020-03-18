@@ -179,14 +179,14 @@ Let's add tests for our desired mapping rules.
 ```java
 @Test
 void match_versioned() {
-    assertThat(pathMatcher.match("/v1/person", "/v1/person")).isTrue();
-    assertThat(pathMatcher.match("/v1/person", "/v2/person")).isTrue();
-    assertThat(pathMatcher.match("/v1/person", "/latest/person")).isTrue();
-    assertThat(pathMatcher.match("/v1/person/{id}", "/latest/person/1234")).isTrue();
-    assertThat(pathMatcher.match("/v1/person/t?st", "/latest/person/test")).isTrue();
-    assertThat(pathMatcher.match("/v1/person/t*", "/latest/person/test")).isTrue();
-    assertThat(pathMatcher.match("/v1/person", "/v0/person")).isFalse();
-    assertThat(pathMatcher.match("/v3/person", "/v2/person")).isFalse();
+  assertThat(pathMatcher.match("/api/v1/person", "/api/v1/person")).isTrue();
+  assertThat(pathMatcher.match("/api/v1/person", "/api/v2/person")).isTrue();
+  assertThat(pathMatcher.match("/api/v1/person", "/api/latest/person")).isTrue();
+  assertThat(pathMatcher.match("/api/v1/person/{id}", "/api/latest/person/1234")).isTrue();
+  assertThat(pathMatcher.match("/api/v1/person/t?st", "/api/latest/person/test")).isTrue();
+  assertThat(pathMatcher.match("/api/v1/person/t*", "/api/latest/person/test")).isTrue();
+  assertThat(pathMatcher.match("/api/v1/person", "/api/v0/person")).isFalse();
+  assertThat(pathMatcher.match("/api/v3/person", "/api/v2/person")).isFalse();
 }
 ```
 
@@ -205,7 +205,7 @@ import java.util.regex.Pattern;
 
 public class VersionedAntPathMatcher extends AntPathMatcher {
 
-  private static final Pattern VERSIONED_PATH_REGEX = Pattern.compile("/(?<version>v\\d{1,2}|latest)/.*");
+  private static final Pattern VERSIONED_PATH_REGEX = Pattern.compile("/api/(?<version>v\\d{1,2}|latest)/.*");
 
   @Override
   protected boolean doMatch(String pattern, String path, boolean fullMatch, Map<String, String> uriTemplateVariables) {
@@ -219,7 +219,7 @@ public class VersionedAntPathMatcher extends AntPathMatcher {
       return super.doMatch(pattern, path, fullMatch, uriTemplateVariables);
     }
     return getApiVersion(pathMatcher) >= getApiVersion(patternMatcher)
-        && super.match(wildcardVersionApi(patternMatcher), path);
+      && super.doMatch(wildcardVersionApi(patternMatcher), path, fullMatch, uriTemplateVariables);
   }
 
   private int getApiVersion(Matcher pathMatcher) {
@@ -409,7 +409,7 @@ __Pros__
 
 __Cons__
 * One cannot release a version of a controller if other controller with same version was already released.
-If there `PersonV2Controller` and `SessionV1Controller` were released, then next versions of a session controller sohuld be V3.
+If there `PersonV2Controller` and `SessionV1Controller` were released, then next versions of a session controller should be V3.
 That is not that obvious and may cause problems if overseen.
 * Code may become hard to follow with many releases. If there are 10 versions of `PersonController`
 with each adding new method (thus, every controller has exactly one method), then from the code point of view it is not obvious that the version 10 of `Person` API has 10 methods (not one as in Controller).
