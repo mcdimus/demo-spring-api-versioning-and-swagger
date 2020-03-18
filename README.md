@@ -83,9 +83,9 @@ public class PersonV2Controller {
 ```
 We are fine with the `PersonV1Controller.getAll` method, and would like to leave it unchanged.
 So here we would like that the second method would be available under `/api/v2/person` without us doing anything extra.
-Same with the sessions. We would like the same method would be available under `/api/v2/session`, again without us lifting a finger.
+Same with the sessions. We would like the same method to be available under `/api/v2/session`, again without us lifting a finger.
 
-Additionally, we might want to have possibility for API clients to be able to access the latest version all the time.
+Additionally, we might want to have a possibility for API clients to have access to the latest version all the time.
 ```
 /api/latest/person
 /api/latest/person/{id}
@@ -115,14 +115,15 @@ where `X` is any number greater than the greatest version available throughout t
 
 This will allow API to evolve without any code duplication.
 
-__But be cautious__, there is a very serious drawback of this approach.
+__But be cautious__, there is a very serious drawback to this approach.
 API developers should clearly understand how API should evolve. 
-As soon as `PersonV1Controller`, `PersonV2Controller`, and `SessionV1Controller` were released, it is not allowed to create `SessionV2Controller` mapped to `/api/v2/session`.
+As soon as `PersonV1Controller`, `PersonV2Controller`, and `SessionV1Controller` would be released,
+it should not be allowed to create `SessionV2Controller` mapped to `/api/v2/session`.
 Here is why:
-* All requests to `/api/v2/session` will be handled by `SessionV1Controller`, right?
-* When we create `SessionV2Controller`, then it will handle `/api/v2/session` instead of `SessionV1Controller`
-* Relase of `SessionV2Controller` will most likely introduce the breaking change to the _session_ api.
-* So now clients who were already using `/api/v2/session` will suddenly find that application is not working anymore as expected.
+* All requests to `/api/v2/session` are handled by `SessionV1Controller`, right?
+* When we create `SessionV2Controller`, then it will handle `/api/v2/session` instead of `SessionV1Controller`.
+* Release of `SessionV2Controller` will most likely introduce the breaking change to the _session_ api.
+* So now clients who were already using `/api/v2/session` will suddenly find that application is not working as expected anymore.
 
 Therefore, we need to very carefully select what is the next version of our api. 
 In a given scenario, `SessionV2Controller` should be skipped, and `SessionV3Controller` should be created instead.
@@ -133,7 +134,7 @@ That being said, lets see how the described logic may be implemented in Spring B
 
 # Spring and Request Mapping
 Spring should have some mechanism how it is mapping actual requests to our controller methods.
-A bit of reverse enginneering and we can find the following chain of method calls:
+A bit of reverse engineering, and we can find the following chain of method calls on an incoming HTTP request:
 ```
 match:194, AntPathMatcher (org.springframework.util)
 getMatchingPattern:271, PatternsRequestCondition (org.springframework.web.servlet.mvc.condition)
@@ -158,7 +159,7 @@ doGet:898, FrameworkServlet (org.springframework.web.servlet)
 As we can see, the class [AntPathMatcher](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/util/AntPathMatcher.html) is of a particular interest.
 
 `AntPathMatcher` implements [PathMatcher](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/util/PathMatcher.html).
-It is clear now, that we need to implement our own `PathMatcher`. We want to remain features offered by `AntPathMatcher`, though. 
+It is clear now, that we need to implement our own `PathMatcher`. We want features offered by `AntiPathMatcher` to remain though.
 So let's just extend the `AntPathMatcher` and modify its behavior.
 
 # AntPathMatcher extension
@@ -243,11 +244,11 @@ public class VersionedAntPathMatcher extends AntPathMatcher {
 
 The central element is the regular expression `VERSIONED_PATH_REGEX`. 
 If both pattern and path do not correspond to the versioned expression, then we simply delegate to `AntPathMatcher`'s `doMatch`.
-Otherwise, we replace a version in the pattern with wildcard character `*` and then delegate to `AntPathMatcher`'s `doMatch`.
+Otherwise, we replace a version in the pattern with the wildcard character `*` and then delegate to `AntPathMatcher`'s `doMatch`.
 
 Rerun tests to verify if everything is green.
 
-Replacing a version in the pattern with wildcard character `*` will make Spring to find all versions for the given endpoint.
+Replacing a version in the pattern with the wildcard character `*` makes Spring to find all versions for the given endpoint.
 But how will Spring decide which is to be actually used? 
 
 Spring will get all matched endpoints,
@@ -404,7 +405,7 @@ __Pros__
 * Explicitness
 * Minimal code duplication
 * No need to define "extra" versions in controllers. We are defining only one version per controller.
-* Works well with service registries as we are always versioning the while API. 
+* Works well with service registries as we are always versioning the whole API. 
 
 __Cons__
 * One cannot release a version of a controller if other controller with same version was already released.
