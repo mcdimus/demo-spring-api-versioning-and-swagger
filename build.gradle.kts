@@ -36,5 +36,5 @@ springBoot {
 
 tasks.wrapper {
   distributionType = Wrapper.DistributionType.ALL
-  version = "6.2.2"
+  version = "6.3"
 }
