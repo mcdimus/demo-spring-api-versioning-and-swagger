@@ -1,3 +1,5 @@
+import org.springframework.boot.gradle.tasks.buildinfo.BuildInfo
+
 plugins {
   java
   id("org.springframework.boot") version "2.3.0.M3"
@@ -32,6 +34,11 @@ tasks.withType<Test> {
 
 springBoot {
   buildInfo()
+}
+
+tasks.withType<BuildInfo> {
+  // so that dummy src/main/resources/META-INF/build-info.properties gets overridden
+  mustRunAfter(tasks.processResources)
 }
 
 tasks.wrapper {
