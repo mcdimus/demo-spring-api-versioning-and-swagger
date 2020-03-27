@@ -112,16 +112,20 @@ public class OpenApiGroupProcessor implements BeanDefinitionRegistryPostProcesso
     registry.registerBeanDefinition(scope + "-" + version + "-groupedOpenApi", bean);
   }
 
-  private void customizePaths(OpenAPI api, String version) {
+  private void customizePaths(OpenAPI api, String overriddenVersion) {
     var pathItemsPerVersion = api.getPaths().entrySet().stream()
       .collect(groupingBy(it -> getApiVersion(it.getKey()), TreeMap::new, toList()));
 
     var newPaths = new Paths();
     pathItemsPerVersion.entrySet().stream()
-      .filter(it -> version.equals("latest") || it.getKey() <= Integer.parseInt(version.substring(1)))
+      .filter(it -> overriddenVersion.equals("latest") || it.getKey() <= Integer.parseInt(overriddenVersion.substring(1)))
       .forEach(pathItemPerVersion -> {
         for (var entry : pathItemPerVersion.getValue()) {
-          newPaths.addPathItem(entry.getKey().replace("/v" + pathItemPerVersion.getKey() + "/", "/" + version + "/"), entry.getValue());
+          String overriddenPath = entry.getKey().replace(
+            "/v" + pathItemPerVersion.getKey() + "/",
+            "/" + overriddenVersion + "/"
+          );
+          newPaths.addPathItem(overriddenPath, entry.getValue());
         }
       });
 
