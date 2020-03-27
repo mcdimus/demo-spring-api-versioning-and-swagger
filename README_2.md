@@ -4,7 +4,7 @@ The code is in the same repo.
 
 Having the versioned REST API we might want to have documentation showing the set of endpoints available under every version.
 We know that nobody is going to keep documentation in actual state unless it is automatically generated, right?
-Thus, it would be awesome to have this documentation to be generated automatically based on the `@RestController`s code.
+Thus, it would be awesome to have this documentation automatically generated based on the `@RestController`s code.
 
 There is a way to achieve this!
 
@@ -54,7 +54,7 @@ As we can see, it is really very easy to add automated REST API documentation an
 We can see all the available endpoints at once. 
 However, wouldn't it be nicer to be able to select a particular version, and look only at endpoints for this particular version?
 Moreover, we have a special version `latest` which has no explicit mapping to controllers. 
-Would be great to get view of the latest available version on Swagger UI as well.
+Would be great to get a view of the latest available version on Swagger UI as well.
 
 Additionally, we might want to add some default headers, and authorization.
 
@@ -62,7 +62,7 @@ As, probably, you have guessed already - there is a way to customize __springdoc
 Let me show how. 
 
 ### Description and application version
-To start with lets add application name, description and version.
+To start with, lets add the application name, description and version.
 
 Create `@Configuration` `OpenApiConfig` and add `OpenAPI` `@Bean` declaration:
 ```java
@@ -87,12 +87,12 @@ public class OpenApiConfig {
 ```
 
 Quite straightforward, isn't it? There are two things to improve:
-* Description can be quite long, so let's move it into separate file in `reosurces`
-* Hardcoded version is no good. We need to automatically get the same version we have in `build.gradle.kts`
+* Description can be quite long, so let's move it into separate file in `reosurces`;
+* Hardcoded version is no good. We need to automatically get the same version we have in `build.gradle.kts`.
 
 The first one is easy. Just create a file `resources/openapi/description` and read its contents in `applicationOpenApi()`.
 
-The second might have been challenging, but Spring Boot gets us covered. 
+The second might have been challenging, but Spring Boot has it covered. 
 There is [a great article](https://www.vojtechruzicka.com/spring-boot-version/) on how to get build properties.
 According to the article, we need to add the following into `build.gradle.kts`:
 ```kotlin
@@ -151,7 +151,7 @@ public class OpenApiConfig {
 
 #### Possible problem with BuildInfo
 With the given configuration, `META-INF/build-info.properties` (which is required to `BuildProperties` bean to be created) will be generated only when application is built with Gradle.
-If you would like to run application from IDE, then you might see the similar error:
+If you would like to run application from an IDE, then you might see the similar error:
 ```
 ***************************
 APPLICATION FAILED TO START
@@ -217,17 +217,17 @@ public OperationCustomizer operationCustomizer() {
 ```
 
 Now if you are going to test endpoint from Swagger UI,
-it will send show the corresponding header inputs pre-filled with the defined default values.
+it will show and send the corresponding header inputs pre-filled with the defined default values.
 
 ### Authorization
 It is a rare REST service that does not require authorization.
 Suppose, our service requires _Authorization_ header with a correct value.
 One solution would be to add a default header as in the previous section. 
 The difference is, that we would not be able to supply a default value. 
-We rather need to get real authorization token, insert into field and then issue a request.
+We rather need to get a real authorization token, insert into the field and then issue a request.
 If you think it may become tedious, then yes, it will.
 
-Fortunately there is a better soluton to this as well.
+Fortunately there is a better solution to this as well.
 
 Add a `SecurityScheme` definition to the `Components` declaration:
 ```java
@@ -246,28 +246,28 @@ And a `SecurityRequirement` into `OperationCustomizer` definition:
 operation.addSecurityItem(new SecurityRequirement().addList("access-token"));
 ```
 
-This will add green __Authorize__ button to the Swagger UI. It can be used to provide authorization token once,
-and Swagger UI will automatically add _Authorization_ header with the provided to every outgoing request.
+This will add green __Authorize__ button to the Swagger UI. It can be used to provide a one time authorization token,
+and Swagger UI will automatically add the _Authorization_ header with the provided token to every outgoing request.
 Thus, no need to provide it every time by hand.
 
-There is more it, you can apply the `SecurityRequrement` only to some endpoints.
-Did you notice that `OperationCustomizer` has second parameter - `handlerMethod`. Use it to make filtering decision.
-E.g. lets require authorization only for _session_ endpoints:
+There is more to it, you can apply the `SecurityRequrement` only to some endpoints.
+Did you notice that the `OperationCustomizer` has a second parameter - `handlerMethod`.
+Use it to make filtering decision. E.g. lets require authorization only for _session_ endpoints:
 ```java
 Stream<String> paths = Arrays.stream(handlerMethod.getBeanType().getAnnotation(RequestMapping.class).value());
 if (paths.allMatch(it -> it.matches("/api/v\\d{1,2}/session"))) {
   operation.addSecurityItem(new SecurityRequirement().addList("access-token"));
 }
 ```
-This case, even if authorization value were defined, Swagger UI will send _Authorization_ header only for _session_ endpoints.
+This case, even if authorization value was defined, Swagger UI will send _Authorization_ header only for _session_ endpoints.
 
 __NB!__ This configuration is only for OpenAPI and Swagger UI, you still need to implement proper security in your application.
 
 ### Servers
 You can notice a _Servers_ labeled dropbox.
-It is possible customize this list with `io.swagger.v3.oas.models.OpenAPI#servers`.
+It is possible to customize this list with `io.swagger.v3.oas.models.OpenAPI#servers`.
 However, if you don't, then _spring-doc_ will provide a generated value.
-It is OK in most cases. Nevertheless, if the application will be deployed behind a HTTPS proxy,
+It is OK in most cases. Nevertheless, if the application will be deployed behind an HTTPS proxy,
 then the generated url will be incorrect.
 
 __To fix the issue__:
@@ -276,13 +276,13 @@ Especially `X-Forwarded-Proto` as Apache Proxy does not send it by default;
 * add `server.forward-headers-strategy=FRAMEWORK` to `application.properties`.
  
 ### Grouping by version
-Finally, we have reached the most complex part. How to group endpoints by version?
+Finally, we have reached the most complex part. How to group endpoints by a version?
 
-__springdoc__'s documentation has an [example](https://springdoc.github.io/springdoc-openapi-demos/faq.html#how-can-i-define-multiple-openapi-definitions-in-one-spring-boot-project).
+__Springdoc__'s documentation has an [example](https://springdoc.github.io/springdoc-openapi-demos/faq.html#how-can-i-define-multiple-openapi-definitions-in-one-spring-boot-project).
 And this approach works well, but not in our case.
-The problem is that some of our endpoints do not exist in the code. Bright example are the endpoints under `latest` version.
+The problem is that some of our endpoints do not exist in the code. Bright examples are the endpoints under `latest` version.
 
-The solution is to use same `GroupedOpenApi` beans,
+The solution is to use the same `GroupedOpenApi` beans,
 but we need to generate them programmatically instead of usual declarative approach.
 
 As simple as it sounds, it turned out to be a rather challenging task.
@@ -302,7 +302,7 @@ Thus, we need to register `GroupedOpenApi` beans before `ConfigurationClassPostP
 For that reason, we will create another `BeanDefinitionRegistryPostProcessor`
 and make it to be executed before `ConfigurationClassPostProcessor`.
 
-Processor's code can be found at the [repo](https://github.com/mcdimus/demo-spring-api-versioning-and-swagger/blob/master/src/main/java/eu/maksimov/demo/spring/versioning/config/OpenApiGroupProcessor.java).
+Processor's code can be found in the [repo](https://github.com/mcdimus/demo-spring-api-versioning-and-swagger/blob/master/src/main/java/eu/maksimov/demo/spring/versioning/config/OpenApiGroupProcessor.java).
 Here I would briefly outline the most important things.
 
 1. Implement `PriorityOrdered` interface with `Ordered.HIGHEST_PRECEDENCE` to make sure `OpenApiGroupProcessor` is run before other processors:
@@ -313,13 +313,13 @@ Here I would briefly outline the most important things.
      }
    ```
 2. Use [ClassPathScanningCandidateComponentProvider](https://docs.spring.io/spring/docs/5.2.4.RELEASE/javadoc-api/org/springframework/context/annotation/ClassPathScanningCandidateComponentProvider.html)
-to find all `RestController`s and respective endpoint paths;
+to find all `RestController`s and respective endpoint paths:
    ```java
    var restControllersScanner = new ClassPathScanningCandidateComponentProvider(false);
        restControllersScanner.addIncludeFilter(new AnnotationTypeFilter(RestController.class));
    ```
 3. Find all available versions based on found paths. Additionally, I am introducing a notion of _scope_.
-Basically, that is just the first part of a path. In out case it is always `api`.
+Basically, that is just the first part of a path. In our case it is always `api`.
 But this way we are leaving a possibility to make grouping more flexible, if it would be necessary;
 4. `registerGroupedOpenApi` constructs _springdoc_'s `GroupedOpenApi` beans and registers it with Spring context.
 The important part here is the addition of `OpenApiCustomiser`.
@@ -328,6 +328,6 @@ It overrides the API version in endpoint paths in accordance with the current ve
 # Conclusion
 Run application and navigate a web browser to http://localhost:8080/swagger-ui.html.
 You will see API group selection dropbox in the right upper corner.
-Try to switch groups and notice how endpoints and their corresponding urls are changing.
+Try to switch groups and notice how endpoints, and their corresponding urls are changing.
 
 Now your REST API, versioned in a tricky way, is fully integrated with OpenAPI and Swagger UI.
